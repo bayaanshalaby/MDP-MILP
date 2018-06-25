@@ -1492,3 +1492,60 @@ Best objective 1.549196299152e+01, best bound 1.549196299152e+01, gap 0.0000%
 
 Gurobi 7.0.2 (win64, Python) logging started 06/22/18 18:45:38
 
+Optimize a model with 1 rows, 3 columns and 3 nonzeros
+Variable types: 0 continuous, 3 integer (3 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 5e-01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e+00, 2e+00]
+Found heuristic solution: objective 6.02744
+Presolve removed 1 rows and 3 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.02 seconds
+Thread count was 1 (of 4 available processors)
+
+Solution count 1: 6.02744 
+Pool objective bound 6.02744
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 6.027441282514e+00, best bound 6.027441282514e+00, gap 0.0000%
+Optimize a model with 1 rows, 3 columns and 3 nonzeros
+Variable types: 0 continuous, 3 integer (3 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 5e-01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e+00, 2e+00]
+Found heuristic solution: objective 6.06619
+Presolve removed 1 rows and 3 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 1 (of 4 available processors)
+
+Solution count 1: 6.09032 
+Pool objective bound 6.09032
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 6.090317161581e+00, best bound 6.090317161581e+00, gap 0.0000%
+Optimize a model with 0 rows, 3 columns and 0 nonzeros
+Variable types: 0 continuous, 3 integer (3 binary)
+Coefficient statistics:
+  Matrix range     [0e+00, 0e+00]
+  Objective range  [5e-01, 5e-01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [0e+00, 0e+00]
+Found heuristic solution: objective 6.50127
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 1 (of 4 available processors)
+
+Solution count 1: 6.50127 
+Pool objective bound 6.50127
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 6.501272502497e+00, best bound 6.501272502497e+00, gap 0.0000%
