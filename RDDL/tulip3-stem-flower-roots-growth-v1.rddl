@@ -1,0 +1,145 @@
+// Tulip Stem, Flower, and Roots Growth
+// Author: Bayaan Shalaby and Thiago Bueno
+// Date:   2018/07/16
+//
+// Finally, the gardener decides she wants to maximize the sum of the heights of the stem and the flower 
+// as well as the length of the roots.
+// Since she is now taking the roots into consideration, she must also decide how many pellets (p) of fertilizer
+// to put into the soil/month (2 <= p <= 5).
+// The addition of fertilizer affects the leaf surface area (lsa) distribution:
+//    lsa ~ N(100 + 0.04*x + 5*d - 10*d, 100 + 0.01*x + d) (if t = 1)
+//    lsa ~ N(145 + 0.01*x + 5*d - 10*d, 33 - 0.005*x + d) (if t = 0)
+//        - The addition of too much fertilizer causes the edges of the leaves to shrivel due to
+//          a phenomenon called "fertilizer burn", where the water sent from the roots to the 
+//          leaves is oversaturated with nutrients which causes the leaf tissues to dry
+//        - To ensure the plant does not completely dry up, we must add a constraint that we must add at
+//          least 150*p mL of water 
+// The root length (cm) is normally distributed:
+//     Root length ~ N(20 + p + 2*d , 1 + d)
+//         - Planting the tulip outside can increase the root length because of there is more space available
+//           and more nutrients at deeper altitudes. 
+// The stem and flower distributions remain the same. 
+
+domain tulip_stem_flower_roots_growth_v1 {
+    
+    requirements = {
+        concurrent,            // decisions on which tulip to buy and how much water to give it happen independently and simultaneously
+        reward-deterministic,  // this domain does not use stochastic reward
+        intermediate-nodes,    // this domain uses intermediate pvariable nodes to model distribution parameters
+        constrained-state      // this domain uses action-preconditions to model action bound constraints
+    };
+
+    pvariables {
+
+        // t = model1.addVar(vtype = GRB.BINARY, name = "Tulip Type")
+        t : { action-fluent, bool, default = false };
+
+        // x = model1.addVar(lb = 250, ub = 1000, name = "Amount of Water/week (mL)")
+        x : { action-fluent, real, default = 625 };
+
+        // d = model2.addVar(vtype = GRB.BINARY, name = "Outdoor?")
+        d : { action-fluent, bool, default = false };
+
+        // p = model3.addVar(lb = 2, ub = 5, name = "Number of Fertilizer Pellets")
+        p : { action-fluent, int, default = 3 };
+
+        // lsaavg = model2.addVar(name = "Total Leaf Surface Area Average")
+        lsa_avg : { interm-fluent, real, level = 1 };
+
+        // lsastdev = model2.addVar(name = "Total Leaf Surface Area Standard Deviation")
+        lsa_stdev : { interm-fluent, real, level = 1 };
+
+        // lsa = model2.addVar(name = "Total Leaf Surface Area")
+        lsa : { interm-fluent, real, level = 1 };
+
+        // flavg = model2.addVar(name = "Flower Petal Height Average")
+        fl_avg : { interm-fluent, real, level = 1 };
+
+        // flstdev = model2.addVar(name = "Flower Petal Height Standard Deviation")
+        fl_stdev : { interm-fluent, real, level = 1 };
+
+        // stem = LinExpr()
+        stem_height : { state-fluent, real, default = 0.0 };
+
+        // flower = LinExpr()
+        flower_height : { state-fluent, real, default = 0.0 };
+
+        // roots = LinExpr()
+        roots_length : { state-fluent, real, default = 0.0 };
+    };
+
+    cpfs {
+
+        // # If t = 1, lsaavg = 100 + 0.06*x + 5*d - 10*p, else lsaavg = 145 + 0.01*x + 5*d - 10*p
+        lsa_avg =
+            if (t == 1) then
+                100 + 0.06 * x + 5 * d - 10 * p
+            else
+                145 + 0.01 * x + 5 * d - 10 * p
+        ;
+
+        // # If t = 1, lsastdev = 100 + 0.01*x + d, else lsastdev = 33 - 0.005*x + d
+        lsa_stdev =
+            if (t == 1) then
+                100 + 0.010 * x + d
+            else
+                33  - 0.005 * x + d
+        ;
+
+        // lsa ~ N(100 + 0.04*x + 5*d, 100 + 0.01*x + d) (if t = 1, total leaf SA ranges from 80-280cm^2)
+        // lsa ~ N(145 + 0.01*x + 5*d, 33 - 0.005*x + d) (if t = 0, total leaf SA ranges from 120-185cm^2)
+        lsa = Normal( lsa_avg, lsa_stdev );
+
+        // Stem Height ~ N(0.1*lsa, 0.01*lsa)
+        stem_height' = Normal( 0.1 * lsa, 0.01 * lsa );
+
+        // # If t = 1, flavg = 3 - 0.001*x + 1.5*(1 - d), else flavg = 3 - 0.0015*x + 0.5*(1 - d)
+        fl_avg =
+            if (t == 1) then
+                3 - 0.0010 * x + 1.5 * (1 - d)
+            else
+                3 - 0.0015 * x + 0.5 * (1 - d)
+        ;
+
+        // # If t = 1, flstdev = 1.35 + d, else flstdev = 0.75 + d
+        fl_stdev =
+            if (t == 1) then
+                1.35 + d
+            else
+                0.75 + d
+        ;
+
+        // Flower Height ~ N(3 - 0.001*x + 1.5*(1 - d), 1.35 + d) (if t = 1, petal height is 2-4.7cm)
+        //               ~ N(3 - 0.0015*x + 0.5*(1 - d), 0.75 + d) (if t = 0, petal height is 2-3.5cm)
+        flower_height' = Normal( fl_avg, fl_stdev );
+
+        // Root length ~ N(20 + p + 2*d , 1 + d)
+        roots_length' = Normal( 20 + p + 2 * d, 1 + d);
+    };
+
+    // the gardener decides she wants to maximize the sum of the heights of the stem and the flower as well as the length of the roots.
+    reward = stem_height' + flower_height' + roots_length';
+
+    action-preconditions {
+        // x = model1.addVar(lb = 250, ub = 1000, ...)
+        x >= 250;
+        x <= 1000;
+
+        // p = model3.addVar(lb = 2, ub = 5, ...)
+        p >= 2;
+        p <= 5;
+
+        // # Water vs. pellets constraint
+        // model3.addConstr(x >= 150*p)
+        x >= 150 * p;
+    };
+}
+
+instance tulip3 {
+    domain = tulip_stem_flower_roots_growth_v1;
+
+    max-nondef-actions = pos-inf; // unrestricted concurrency
+
+    horizon  = 1;    // single decision stage
+    discount = 1.0;  // no discount
+}

@@ -1,0 +1,75 @@
+// Tulip Stem, Flower, and Roots Growth
+// Author: Bayaan Shalaby and Thiago Bueno
+// Date:   2018/07/16
+//
+// Finally, the gardener decides she wants to maximize the sum of the heights of the stem and the flower 
+// as well as the length of the roots.
+// Since she is now taking the roots into consideration, she must also decide how many pellets (p) of fertilizer
+// to put into the soil/month (2 <= p <= 5).
+// The addition of fertilizer affects the leaf surface area (lsa) distribution:
+//    lsa ~ N(100 + 0.04*x + 5*d - 10*d, 100 + 0.01*x + d) (if t = 1)
+//    lsa ~ N(145 + 0.01*x + 5*d - 10*d, 33 - 0.005*x + d) (if t = 0)
+//        - The addition of too much fertilizer causes the edges of the leaves to shrivel due to
+//          a phenomenon called "fertilizer burn", where the water sent from the roots to the 
+//          leaves is oversaturated with nutrients which causes the leaf tissues to dry
+//        - To ensure the plant does not completely dry up, we must add a constraint that we must add at
+//          least 150*p mL of water 
+// The root length (cm) is normally distributed:
+//     Root length ~ N(20 + p + 2*d , 1 + d)
+//         - Planting the tulip outside can increase the root length because of there is more space available
+//           and more nutrients at deeper altitudes. 
+// The stem and flower distributions remain the same. 
+
+domain tulip_stem_flower_roots_growth {
+
+    requirements = {
+        concurrent,            // decisions on which tulip to buy and how much water to give it happen independently and simultaneously
+        reward-deterministic,  // this domain does not use stochastic reward
+        intermediate-nodes,    // this domain uses intermediate pvariable nodes to model distribution parameters
+        constrained-state      // this domain uses action-preconditions to model action bound constraints
+    };
+
+    types {
+        tulip : object;
+    };
+
+    pvariables {
+
+    };
+
+    cpfs {
+
+    };
+
+    // the gardener decides she wants to maximize the sum of the heights of the stem and the flower as well as the length of the roots.
+    reward = ... ;
+
+    action-preconditions {
+
+    };
+}
+
+non-fluents nf_tulip3 {
+
+    domain = tulip_stem_flower_roots_growth_v2;
+
+    objects {
+
+    };
+
+    non-fluents {
+
+    };
+}
+
+
+instance tulip3 {
+    domain = tulip_stem_flower_roots_growth_v2;
+    non-fluents = nf_tulip3;
+
+    // action-preconditions above are sufficient
+    max-nondef-actions = pos-inf;
+
+    horizon  = 1;    // single decision stage
+    discount = 1.0;  // no discount
+}
