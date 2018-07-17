@@ -1,0 +1,111 @@
+// Tulip Stem Growth
+// Author: Bayaan Shalaby and Thiago Bueno
+// Date:   2018/07/16
+//
+// A gardener wants to maximize the height of the stem of a tulip she plants.
+// She needs to decide (t) between buying two different types of tulips:
+//     1. Red Tulip (Tulipa orphanidea, t = 1): Average height is 15cm, std dev is 5cm
+//     2. Purple Tulip (Tulipa saxatilis, t = 0): Average height is 15cm, std dev is 10cm
+// Additionally, she will decide how many mL of water/week (x) to give the tulip (250mL-1L)
+//     1. For the red tulip, more water increases the average height by a factor of 0.0012x
+//        and increases the std dev by a factor of 0.01x
+//     2. For the purple tulip, more water increases the height by a factor of 0.001x and
+//        and decreases the std dev by a factor of 0.005x
+//
+
+domain tulip_stem_growth_v2 {
+
+    requirements = {
+        concurrent,            // decisions on which tulip to buy and how much water to give it happen independently and simultaneously
+        reward-deterministic,  // this domain does not use stochastic reward
+        intermediate-nodes,    // this domain uses intermediate pvariable nodes to model distribution parameters
+        constrained-state      // this domain uses action-preconditions to model action bound constraints
+    };
+
+    types {
+        tulip : object;
+    };
+
+    pvariables {
+
+        STEM_HEIGHT_AVG_BASE_VALUE(tulip)  : { non-fluent, real, default = 15.0 };
+        STEM_HEIGHT_AVG_WATER_RATIO(tulip) : { non-fluent, real, default = 0.010 };
+
+        STEM_HEIGHT_STDDEV_BASE_VALUE(tulip)  : { non-fluent, real, default = 5.0 };
+        STEM_HEIGHT_STDDEV_WATER_RATIO(tulip) : { non-fluent, real, default = 0.010 };
+
+        // avg = model1.addVar(name = "Average")
+        stem_avg(tulip) : { interm-fluent, real, level = 1 };
+
+        // stdev = model1.addVar(name = "Standard Deviation")
+        stem_stddev(tulip) : { interm-fluent, real, level = 1 };
+
+        // obj = LinExpr()
+        stem_height(tulip) : { state-fluent, real, default = 0.0 };
+
+        // t = model1.addVar(vtype = GRB.BINARY, name = "Tulip Type")
+        buy_tulip(tulip) : { action-fluent, bool, default = false };
+
+        // x = model1.addVar(lb = 250, ub = 1000, name = "Amount of Water/week (mL)")
+        water : { action-fluent, real, default = 625 };
+
+    };
+
+    cpfs {
+
+        stem_avg(?t) = STEM_HEIGHT_AVG_BASE_VALUE(?t) + STEM_HEIGHT_AVG_WATER_RATIO(?t) * water;
+
+        stem_stddev(?t) = STEM_HEIGHT_STDDEV_BASE_VALUE(?t) + STEM_HEIGHT_STDDEV_WATER_RATIO(?t);
+
+        stem_height'(?t) = Normal( stem_avg(?t), stem_stddev(?t) );
+
+    };
+
+    // A gardener wants to maximize the height of the stem of a tulip she plants.
+    reward = sum_{?t : tulip} [buy_tulip(?t) * stem_height'(?t)];
+
+    action-preconditions {
+        // gardener only gets to buy one tulip
+        (sum_{?t : tulip} [buy_tulip(?t)]) == 1;
+
+        // x = model1.addVar(lb = 250, ub = 1000, ...)
+        water >= 250;
+        water <= 1000;
+    };
+}
+
+
+non-fluents nf_tulip1 {
+
+    domain = tulip_stem_growth_v2;
+
+    objects {
+        tulip : { red, purple };
+    };
+
+    non-fluents {
+        // # If t = 1, avg = 15 + 0.001x, else avg = 15 + 0.0015x
+        STEM_HEIGHT_AVG_BASE_VALUE(red) = 15.0;
+        STEM_HEIGHT_AVG_WATER_RATIO(red) = 0.001;
+        STEM_HEIGHT_AVG_BASE_VALUE(purple) = 15.0;
+        STEM_HEIGHT_AVG_WATER_RATIO(purple) = 0.0015;
+
+        // # If t = 1, stdev = 5 + 0.01x, else stdev = 10 - 0.01x
+        STEM_HEIGHT_STDDEV_BASE_VALUE(red) = 5.0;
+        STEM_HEIGHT_STDDEV_WATER_RATIO(red) = 0.01;
+        STEM_HEIGHT_STDDEV_BASE_VALUE(purple) = 10.0;
+        STEM_HEIGHT_STDDEV_WATER_RATIO(purple) = -0.01;
+    };
+}
+
+
+instance tulip1 {
+    domain = tulip_stem_growth_v2;
+    non-fluents = nf_tulip1;
+
+    // action-preconditions above are sufficient
+    max-nondef-actions = pos-inf;
+
+    horizon  = 1;    // single decision stage
+    discount = 1.0;  // no discount
+}
