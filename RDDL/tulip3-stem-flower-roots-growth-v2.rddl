@@ -7,7 +7,7 @@
 // Since she is now taking the roots into consideration, she must also decide how many pellets (p) of fertilizer
 // to put into the soil/month (2 <= p <= 5).
 // The addition of fertilizer affects the leaf surface area (lsa) distribution:
-//    lsa ~ N(100 + 0.04*x + 5*d - 10*d, 100 + 0.01*x + d) (if t = 1)
+//    lsa ~ N(100 + 0.06*x + 5*d - 10*d, 100 + 0.01*x + d) (if t = 1)
 //    lsa ~ N(145 + 0.01*x + 5*d - 10*d, 33 - 0.005*x + d) (if t = 0)
 //        - The addition of too much fertilizer causes the edges of the leaves to shrivel due to
 //          a phenomenon called "fertilizer burn", where the water sent from the roots to the 
@@ -34,18 +34,93 @@ domain tulip_stem_flower_roots_growth {
     };
 
     pvariables {
+        LSA_AVG_BASE_VALUE(tulip)    : { non-fluent, real, default = 100.0 };
+        LSA_AVG_WATER_RATIO(tulip)   : { non-fluent, real, default = 0.060 };
+        LSA_AVG_OUTSIDE_RATIO(tulip) : { non-fluent, real, default = 5.0 };
 
+        LSA_STDDEV_BASE_VALUE(tulip)    : { non-fluent, real, default = 100.0 };
+        LSA_STDDEV_WATER_RATIO(tulip)   : { non-fluent, real, default = 0.010 };
+        LSA_STDDEV_OUTSIDE_RATIO(tulip) : { non-fluent, real, default = 1.0 };
+
+        // lsaavg = model3.addVar(name = "Total Leaf Surface Area Average")
+        lsa_avg(tulip) : { interm-fluent, real, level = 1 };
+
+        // lsastdev = model3.addVar(name = "Total Leaf Surface Area Standard Deviation")
+        lsa_stddev(tulip) : { interm-fluent, real, level = 1 };
+
+        // lsa = model3.addVar(name = "Total Leaf Surface Area")
+        lsa(tulip) : { interm-fluent, real, level = 1 };
+
+
+        FLOWER_AVG_BASE_VALUE(tulip)    : { non-fluent, real, default = 3.0 };
+        FLOWER_AVG_WATER_RATIO(tulip)   : { non-fluent, real, default = -0.001 };
+        FLOWER_AVG_INSIDE_RATIO(tulip)  : { non-fluent, real, default = 1.5 };
+
+        FLOWER_STDDEV_BASE_VALUE(tulip)    : { non-fluent, real, default = 1.35 };
+        FLOWER_STDDEV_OUTSIDE_RATIO(tulip) : { non-fluent, real, default = 1.0 };
+
+        // flavg = model3.addVar(name = "Flower Petal Height Average")
+        fl_avg(tulip) : { interm-fluent, real, level = 1 };
+
+        // flstdev = model3.addVar(name = "Flower Petal Height Standard Deviation")
+        fl_stddev(tulip) : { interm-fluent, real, level = 1 };
+
+
+        // t = model3.addVar(vtype = GRB.BINARY, name = "Tulip Type")
+        buy_tulip(tulip) : { action-fluent, bool, default = false };
+
+        // d = model3.addVar(vtype = GRB.BINARY, name = "Outdoor?")
+        plant_outside : { action-fluent, bool, default = false };
+
+        // x = model3.addVar(lb = 250, ub = 1000, name = "Amount of Water/week (mL)")
+        water : { action-fluent, real, default = 625 };
+        
+        // p = model3.addVar(lb = 2, ub = 5, name = "Number of Fertilizer Pellets"
+        pellets : { action-fluent, int, default = 3} 
+
+        // stem = LinExpr()
+        stem_height(tulip) : { state-fluent, real, default = 0.0 };
+
+        // flower = LinExpr()
+        flower_height(tulip) : { state-fluent, real, default = 0.0 };
+        
+        // roots = LinExpr()
+        roots_length : { state-fluent, real, default = 0.0} 
     };
 
     cpfs {
+    
+        lsa_avg(?t) = LSA_AVG_BASE_VALUE(?t) + LSA_AVG_WATER_RATIO(?t) * water + LSA_AVG_OUTSIDE_RATIO(?t) * plant_outside - 10*pellets;
+        lsa_stddev(?t) = LSA_STDDEV_BASE_VALUE(?t) + LSA_STDDEV_WATER_RATIO(?t) * water + LSA_STDDEV_OUTSIDE_RATIO(?t) * plant_outside;
+        lsa(?t) = Normal( lsa_avg(?t), lsa_stddev(?t) );
+
+        stem_height'(?t) = Normal( 0.1 * lsa(?t), 0.01 * lsa(?t) ); // Stem Height ~ N(0.1*lsa, 0.01*lsa)
+
+        fl_avg(?t) = FLOWER_AVG_BASE_VALUE(?t) + FLOWER_AVG_WATER_RATIO(?t) * water + FLOWER_AVG_INSIDE_RATIO(?t) * ~plant_outside;
+        fl_stddev(?t) = FLOWER_STDDEV_BASE_VALUE(?t) + FLOWER_STDDEV_OUTSIDE_RATIO(?t) * plant_outside;
+        flower_height'(?t) = Normal( fl_avg(?t), fl_stddev(?t) );
+        
+        roots_length' = Normal( 20 + pellets + 2 * d, 1 + d);
 
     };
 
     // the gardener decides she wants to maximize the sum of the heights of the stem and the flower as well as the length of the roots.
-    reward = ... ;
+    reward = sum_{?t : tulip} [ buy_tulip(?t) * (stem_height'(?t) + flower_height'(?t))] + roots_length';
 
     action-preconditions {
-
+        // Can only buy one tulip 
+        (sum_{?t : tulip} [buy_tulip(?t)]) == 1;
+        
+        // Water constraints 
+        water >= 250;
+        water <= 1000;
+        
+        // Fertilizer Pellets constraints 
+        pellets >= 2;
+        pellets <= 5;
+        
+        // Water vs. pellets ration constraint
+        x >= 150 * pellets; 
     };
 }
 
@@ -54,11 +129,40 @@ non-fluents nf_tulip3 {
     domain = tulip_stem_flower_roots_growth_v2;
 
     objects {
-
+        tulip : { red, purple };
     };
 
     non-fluents {
+        // # If t = 1, lsaavg = 100 + 0.06*x + 5*d, else lsaavg = 145 + 0.01*x + 5*d - 10*p (pellets not parameterized)
+        LSA_AVG_BASE_VALUE(red) = 100.0;
+        LSA_AVG_WATER_RATIO(red) = 0.06;
+        LSA_AVG_OUTSIDE_RATIO(red) = 5.0;
+        LSA_AVG_BASE_VALUE(purple) = 145.0;
+        LSA_AVG_WATER_RATIO(purple) = 0.01;
+        LSA_AVG_OUTSIDE_RATIO(purple) = 5.0;
 
+        // # If t = 1, lsastdev = 100 + 0.01*x + d, else lsastdev = 33 - 0.005*x + d 
+        LSA_STDDEV_BASE_VALUE(red) = 100.0;
+        LSA_STDDEV_WATER_RATIO(red) = 0.01;
+        LSA_STDDEV_OUTSIDE_RATIO(red) = 1.0;
+        LSA_STDDEV_BASE_VALUE(purple) = 33.0;
+        LSA_STDDEV_WATER_RATIO(purple) = -0.005;
+        LSA_STDDEV_OUTSIDE_RATIO(purple) = 1.0;
+
+
+        // # If t = 1, flavg = 3 - 0.001*x + 1.5*(1 - d), else flavg = 3 - 0.0015*x + 0.5*(1 - d)
+        FLOWER_AVG_BASE_VALUE(red) = 3.0;
+        FLOWER_AVG_WATER_RATIO(red) = -0.001;
+        FLOWER_AVG_INSIDE_RATIO(red) = 1.5;
+        FLOWER_AVG_BASE_VALUE(purple) = 3.0;
+        FLOWER_AVG_WATER_RATIO(purple) = -0.0015;
+        FLOWER_AVG_INSIDE_RATIO(purple) = 0.5;
+
+        // # If t = 1, flstdev = 1.35 + d, else flstdev = 0.75 + d
+        FLOWER_STDDEV_BASE_VALUE(red) = 1.35;
+        FLOWER_STDDEV_OUTSIDE_RATIO(red) = 1.0;
+        FLOWER_STDDEV_BASE_VALUE(purple) = 0.75;
+        FLOWER_STDDEV_OUTSIDE_RATIO(purple) = 1.0;
     };
 }
 
