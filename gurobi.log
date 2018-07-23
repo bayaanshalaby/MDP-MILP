@@ -1801,3 +1801,62 @@ Pool objective bound 17.7593
 
 Optimal solution found (tolerance 1.00e-04)
 Best objective 1.775927475327e+01, best bound 1.775927475327e+01, gap 0.0000%
+
+Gurobi 7.0.2 (win64, Python) logging started 07/19/18 20:23:43
+
+Optimize a model with 9 rows, 4 columns and 26 nonzeros
+Variable types: 3 continuous, 1 integer (1 binary)
+Coefficient statistics:
+  Matrix range     [1e-03, 1e+03]
+  Objective range  [4e-02, 1e+00]
+  Bounds range     [1e+00, 1e+03]
+  RHS range        [1e+01, 1e+03]
+Presolve time: 0.00s
+Presolved: 9 rows, 4 columns, 26 nonzeros
+Variable types: 3 continuous, 1 integer (1 binary)
+
+Root relaxation: objective 1.653279e+01, 2 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0      16.5327939   16.53279  0.00%     -    0s
+
+Explored 0 nodes (2 simplex iterations) in 0.05 seconds
+Thread count was 4 (of 4 available processors)
+
+Solution count 1: 16.5328 
+Pool objective bound 16.5328
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.653279389297e+01, best bound 1.653279389297e+01, gap 0.0000%
+Optimize a model with 28 rows, 11 columns and 104 nonzeros
+Variable types: 8 continuous, 3 integer (2 binary)
+Coefficient statistics:
+  Matrix range     [1e-03, 1e+04]
+  Objective range  [4e-02, 1e+00]
+  Bounds range     [1e+00, 1e+03]
+  RHS range        [8e-01, 1e+04]
+Presolve removed 9 rows and 1 columns
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.02 seconds
+Thread count was 1 (of 4 available processors)
+
+Solution count 0
+Pool objective bound 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Gurobi 7.0.2 (win64, Python) logging started 07/22/18 18:51:08
+
+
+Gurobi 7.0.2 (win64, Python) logging started 07/22/18 21:21:29
+
+
+Gurobi 7.0.2 (win64, Python) logging started 07/22/18 21:37:01
+
+
+Gurobi 7.0.2 (win64, Python) logging started 07/22/18 22:01:56
+
