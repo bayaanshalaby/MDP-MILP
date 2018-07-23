@@ -1,0 +1,83 @@
+// Tulip Stem Growth
+// Author: Bayaan Shalaby and Thiago Bueno
+// Date:   2018/07/16
+//
+// A gardener wants to maximize the height of the stem of a tulip she plants.
+// She needs to decide (t) between buying two different types of tulips:
+//     1. Red Tulip (Tulipa orphanidea, t = 1): Average height is 15cm, std dev is 5cm
+//     2. Purple Tulip (Tulipa saxatilis, t = 0): Average height is 15cm, std dev is 10cm
+// Additionally, she will decide how many mL of water/week (x) to give the tulip (250mL-1L)
+//     1. For the red tulip, more water increases the average height by a factor of 0.0012x
+//        and increases the std dev by a factor of 0.01x
+//     2. For the purple tulip, more water increases the height by a factor of 0.001x and
+//        and decreases the std dev by a factor of 0.005x
+//
+
+domain tulip_stem_growth_v1 {
+
+    requirements = {
+        concurrent,            // decisions on which tulip to buy and how much water to give it happen independently and simultaneously
+        reward-deterministic,  // this domain does not use stochastic reward
+        intermediate-nodes,    // this domain uses intermediate pvariable nodes to model distribution parameters
+        constrained-state      // this domain uses action-preconditions to model action bound constraints
+    };
+
+    pvariables {
+
+        // t = model1.addVar(vtype = GRB.BINARY, name = "Tulip Type")
+        t : { action-fluent, bool, default = false };
+
+        // x = model1.addVar(lb = 250, ub = 1000, name = "Amount of Water/week (mL)")
+        x : { action-fluent, real, default = 625 };
+
+        // avg = model1.addVar(name = "Average")
+        avg : { interm-fluent, real, level = 1 };
+
+        // stdev = model1.addVar(name = "Standard Deviation")
+        stdev : { interm-fluent, real, level = 1 };
+
+        // obj = LinExpr()
+        stem_height : { state-fluent, real, default = 0.0 };
+
+    };
+
+    cpfs {
+
+        // # If t = 1, avg = 15 + 0.001x, else avg = 15 + 0.0015x
+        avg =
+            if (t == 1) then
+                15 + 0.0010 * x
+            else
+                15 + 0.0015 * x
+        ;
+
+        // # If t = 1, stdev = 5 + 0.01x, else avg = 10 - 0.01x
+        stdev =
+            if (t == 1) then
+                5 + 0.01 * x
+            else
+                10 - 0.01 * x
+        ;
+
+        stem_height' = Normal( avg, stdev );
+
+    };
+
+    // A gardener wants to maximize the height of the stem of a tulip she plants.
+    reward = stem_height';
+
+    action-preconditions {
+        // x = model1.addVar(lb = 250, ub = 1000, ...)
+        x >= 250;
+        x <= 1000;
+    };
+}
+
+instance tulip1 {
+    domain = tulip_stem_growth_v1;
+
+    max-nondef-actions = pos-inf; // unrestricted concurrency
+
+    horizon  = 1;    // single decision stage
+    discount = 1.0;  // no discount
+}

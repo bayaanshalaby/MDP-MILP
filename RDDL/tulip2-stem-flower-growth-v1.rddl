@@ -1,0 +1,136 @@
+// Tulip Stem and Flower Growth
+// Author: Bayaan Shalaby and Thiago Bueno
+// Date:   2018/07/16
+//
+// The gardener now decides she wants to maximize the sum of the heights of the stem and flower.
+// She adds whether to plant the tulip outside (d = 1) in a flower bed to her list of considerations.
+// * Note: planting the tulip outside always adds 1 to the std dev of any distribution 
+//   since the outdoors present more variability 
+//       (i.e flower can be eaten by an animal, or thrive because of rich soil etc.)
+// Additionally, she considers the positive proportional relationship between total leaf surface area (lsa) 
+// and stem height:
+//     Stem Height ~ N(0.1*lsa, 0.01*lsa)
+// Each tulip type's leaf surface area and flower height are normally distributed and are affected by amount of water
+// and whether or not the plant is outside or not. 
+//    lsa ~ N(100 + 0.04*x + 5*d, 100 + 0.01*x + d) (if t = 1, total leaf SA ranges from 80-280cm^2)
+//    lsa ~ N(145 + 0.01*x + 5*d, 33 - 0.005*x + d) (if t = 0, total leaf SA ranges from 120-185cm^2)
+//        - More water increases lsa because there is more water available for photosynthesis 
+//          (photosynthesis occurs in the leaves)
+//        - Being planted outdoors increases lsa because there is more competition which causes 
+//          the plant to direct more growth to the leaf to be able to get more sunlight
+//     Flower Height ~ N(3 - 0.001*x + 1.5*(1 - d), 1.35 + d) (if t = 1, petal height is 2-4.7cm)
+//                   ~ N(3 - 0.0015*x + 0.5*(1 - d), 0.75 + d) (if t = 0, petal height is 2-3.5cm)
+//         - In drought conditions, plants direct more growth to their reproductive organ (flower)
+//           than leaf growth because larger lsa increases water loss and to ensure the species remains
+//           in the area (via reproduction) should it die during a drought. Simulate drought conditions 
+//           (less water) to induce flower growth
+//         - Being indoors increases flower height because there is less competition so the plant doesn't
+//           have to direct most growth to leaf surface area
+
+domain tulip_stem_flower_growth_v1 {
+
+    requirements = {
+        concurrent,            // decisions on which tulip to buy and how much water to give it happen independently and simultaneously
+        reward-deterministic,  // this domain does not use stochastic reward
+        intermediate-nodes,    // this domain uses intermediate pvariable nodes to model distribution parameters
+        constrained-state      // this domain uses action-preconditions to model action bound constraints
+    };
+
+    pvariables {
+
+        // t = model1.addVar(vtype = GRB.BINARY, name = "Tulip Type")
+        t : { action-fluent, bool, default = false };
+
+        // x = model1.addVar(lb = 250, ub = 1000, name = "Amount of Water/week (mL)")
+        x : { action-fluent, real, default = 625 };
+
+        // d = model2.addVar(vtype = GRB.BINARY, name = "Outdoor?")
+        d : { action-fluent, bool, default = false };
+
+        // lsaavg = model2.addVar(name = "Total Leaf Surface Area Average")
+        lsa_avg : { interm-fluent, real, level = 1 };
+
+        // lsastdev = model2.addVar(name = "Total Leaf Surface Area Standard Deviation")
+        lsa_stdev : { interm-fluent, real, level = 1 };
+
+        // lsa = model2.addVar(name = "Total Leaf Surface Area")
+        lsa : { interm-fluent, real, level = 1 };
+
+        // flavg = model2.addVar(name = "Flower Petal Height Average")
+        fl_avg : { interm-fluent, real, level = 1 };
+
+        // flstdev = model2.addVar(name = "Flower Petal Height Standard Deviation")
+        fl_stdev : { interm-fluent, real, level = 1 };
+
+        // stem = LinExpr()
+        stem_height : { state-fluent, real, default = 0.0 };
+
+        // flower = LinExpr()
+        flower_height : { state-fluent, real, default = 0.0 };
+    };
+
+    cpfs {
+
+        // # If t = 1, lsaavg = 100 + 0.06*x + 5*d, else lsaavg = 145 + 0.01*x + 5*d
+        lsa_avg =
+            if (t == 1) then
+                100 + 0.06 * x + 5 * d
+            else
+                145 + 0.01 * x + 5 * d
+        ;
+
+        // # If t = 1, lsastdev = 100 + 0.01*x + d, else lsastdev = 33 - 0.005*x + d
+        lsa_stdev =
+            if (t == 1) then
+                100 + 0.010 * x + d
+            else
+                33  - 0.005 * x + d
+        ;
+
+        // lsa ~ N(100 + 0.04*x + 5*d, 100 + 0.01*x + d) (if t = 1, total leaf SA ranges from 80-280cm^2)
+        // lsa ~ N(145 + 0.01*x + 5*d, 33 - 0.005*x + d) (if t = 0, total leaf SA ranges from 120-185cm^2)
+        lsa = Normal( lsa_avg, lsa_stdev );
+
+        // Stem Height ~ N(0.1*lsa, 0.01*lsa)
+        stem_height' = Normal( 0.1 * lsa, 0.01 * lsa );
+
+        // # If t = 1, flavg = 3 - 0.001*x + 1.5*(1 - d), else flavg = 3 - 0.0015*x + 0.5*(1 - d)
+        fl_avg =
+            if (t == 1) then
+                3 - 0.0010 * x + 1.5 * (1 - d)
+            else
+                3 - 0.0015 * x + 0.5 * (1 - d)
+        ;
+
+        // # If t = 1, flstdev = 1.35 + d, else flstdev = 0.75 + d
+        fl_stdev =
+            if (t == 1) then
+                1.35 + d
+            else
+                0.75 + d
+        ;
+
+        // Flower Height ~ N(3 - 0.001*x + 1.5*(1 - d), 1.35 + d) (if t = 1, petal height is 2-4.7cm)
+        //               ~ N(3 - 0.0015*x + 0.5*(1 - d), 0.75 + d) (if t = 0, petal height is 2-3.5cm)
+        flower_height' = Normal( fl_avg, fl_stdev );
+
+    };
+
+    // The gardener now decides she wants to maximize the sum of the heights of the stem and flower.
+    reward = stem_height' + flower_height';
+
+    action-preconditions {
+        // x = model1.addVar(lb = 250, ub = 1000, ...)
+        x >= 250;
+        x <= 1000;
+    };
+}
+
+instance tulip2 {
+    domain = tulip_stem_flower_growth_v1;
+
+    max-nondef-actions = pos-inf; // unrestricted concurrency
+
+    horizon  = 1;    // single decision stage
+    discount = 1.0;  // no discount
+}
