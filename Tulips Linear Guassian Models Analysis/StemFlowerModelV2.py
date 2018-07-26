@@ -14,8 +14,8 @@ class StemFlowerModel:
                           "Leaf Water Ratio Stdev": -0.001,
                           "Leaf Outdoor Ratio Stdev": 1,
                           "Flower Base Avg": 6,
-                          "Flower Water Ratio Avg": -0.001,
-                          "Flower Outdoor Ratio Avg": 2,
+                          "Flower Water Ratio Avg": -0.00501,
+                          "Flower Outdoor Ratio Avg": 2.01,
                           "Flower Base Stdev": 1.35,
                           "Flower Outdoor Ratio Stdev": 1}
         self.purpleParams = {"Leaf Base Avg" : 150,
@@ -25,8 +25,8 @@ class StemFlowerModel:
                           "Leaf Water Ratio Stdev": -0.005,
                           "Leaf Outdoor Ratio Stdev": 1,
                           "Flower Base Avg": 8,
-                          "Flower Water Ratio Avg": -0.0015,
-                          "Flower Outdoor Ratio Avg": 1,
+                          "Flower Water Ratio Avg": -0.000502,
+                          "Flower Outdoor Ratio Avg": 0.502,
                           "Flower Base Stdev": 0.75,
                           "Flower Outdoor Ratio Stdev": 1}                  
         self.costParams = {"Red Tulip" : 1.5, 
@@ -49,17 +49,20 @@ class StemFlowerModel:
         self.model.update()
         
         # Set objective 
-        np.random.seed(self.randomSeed)
-        lnorms = np.random.standard_normal(self.n)
-        self.lavg = np.mean(lnorms)
-        snorms = np.random.standard_normal(self.n)
-        self.savg = np.mean(snorms)
-        fnorms = np.random.standard_normal(self.n)
-        self.favg = np.mean(fnorms)
-        leaf = (1/self.n)*(sum(lsaavg + lsastdev*lnorm for lnorm in lnorms))
-        stem = (1/self.n)*(sum(0.1*leaf + 0.05*leaf*snorm for snorm in snorms))
-        flower = (1/self.n)*(sum(flavg + flstdev*fnorm for fnorm in fnorms))
-        self.model.setObjective(stem + flower, GRB.MAXIMIZE)
+        i = 0
+        leaf = LinExpr()
+        stem = LinExpr()
+        flower = LinExpr()
+        while i < self.n:
+
+            leaf += lsaavg + lsastdev*np.random.standard_normal()
+            stem += 0.1*(lsa) + 0.05*(lsa)*np.random.standard_normal()
+            flower += flavg + flstdev*np.random.standard_normal()
+
+            i += 1
+
+        # Set objective
+        self.model.setObjective((1/self.n)*(stem + flower), GRB.MAXIMIZE)
 
         # Set constraints 
         M = 10000

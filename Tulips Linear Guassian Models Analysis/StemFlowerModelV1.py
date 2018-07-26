@@ -1,5 +1,6 @@
 from gurobipy import *
 import numpy as np
+import time 
 
 class StemFlowerModel:
     def __init__(self, name, randomSeed, n):
@@ -10,6 +11,7 @@ class StemFlowerModel:
         self.buildModel()
     
     def buildModel(self):
+        start_time = time.time()
         self.model.setParam('OutputFlag', 0)
 
         # Create Variables 
@@ -75,6 +77,8 @@ class StemFlowerModel:
         
         # Optimize model
         self.model.optimize()
+        end_time = time.time()
+        self.runTime = end_time - start_time 
         
     def getVar(self, varName):
         return self.model.getVarByName(varName).x
@@ -94,3 +98,12 @@ class StemFlowerModel:
             avgReward += stemHeight + flHeight 
             i += 1
         return avgReward/trials
+    
+    def getRunTime(self):
+        return self.runTime
+    
+    def getOptimizationTime(self):
+        return self.model.Runtime
+    
+    def getSimplexIters(self):
+        return self.model.IterCount
