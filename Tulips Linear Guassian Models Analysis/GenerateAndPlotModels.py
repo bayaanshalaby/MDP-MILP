@@ -13,7 +13,7 @@ StemFlowerRootsPlots = {}
 def generateStemModels(samples, trials):
     
     StemPlots.clear()
-    StemPlots.setdefault("Tulip Type", BinaryVariablePlot("Tulip Type", samples))
+    StemPlots.setdefault("Tulip Type", DiscreteVariablePlot("Tulip Type", samples))
     StemPlots.setdefault("Amount of Water", ContinuousVariablePlot("Amount of Water/week (mL)", samples))
     StemPlots.setdefault("Objective Function Value", ContinuousVariablePlot("Objective Function Value", samples))
     StemPlots.setdefault("Sampled Reward", ContinuousVariablePlot("Sampled Reward", samples))
@@ -44,7 +44,7 @@ def generateStemModels(samples, trials):
             SimplexIter.append(sampleModel.getSimplexIters())
             i += 1
             
-        StemPlots.get("Tulip Type").addRatio(TulipType)
+        StemPlots.get("Tulip Type").addAvg(TulipType)
         StemPlots.get("Amount of Water").addAvgAndStdev(Water)
         StemPlots.get("Objective Function Value").addAvgAndStdev(Obj)
         StemPlots.get("Sampled Reward").addAvgAndStdev(Reward)
@@ -58,9 +58,9 @@ def generateStemModels(samples, trials):
 def generateStemFlowerModels(samples, trials):
     
     StemFlowerPlots.clear()
-    StemFlowerPlots.setdefault("Tulip Type", BinaryVariablePlot("Tulip Type", samples))
+    StemFlowerPlots.setdefault("Tulip Type", DiscreteVariablePlot("Tulip Type", samples))
     StemFlowerPlots.setdefault("Amount of Water", ContinuousVariablePlot("Amount of Water/week (mL)", samples))
-    StemFlowerPlots.setdefault("Outdoor", BinaryVariablePlot("Outdoors", samples))
+    StemFlowerPlots.setdefault("Outdoor", DiscreteVariablePlot("Outdoors", samples))
     StemFlowerPlots.setdefault("Objective Function Value", ContinuousVariablePlot("Objective Function Value", samples))
     StemFlowerPlots.setdefault("Sampled Reward", ContinuousVariablePlot("Sampled Reward", samples))
     StemFlowerPlots.setdefault("Runtime", DiscreteVariablePlot("Total Runtime (s)", samples))
@@ -92,9 +92,9 @@ def generateStemFlowerModels(samples, trials):
             SimplexIter.append(sampleModel.getSimplexIters())
             i += 1
             
-        StemFlowerPlots.get("Tulip Type").addRatio(TulipType)
+        StemFlowerPlots.get("Tulip Type").addAvg(TulipType)
         StemFlowerPlots.get("Amount of Water").addAvgAndStdev(Water)
-        StemFlowerPlots.get("Outdoor").addRatio(Outdoor)
+        StemFlowerPlots.get("Outdoor").addAvg(Outdoor)
         StemFlowerPlots.get("Objective Function Value").addAvgAndStdev(Obj)
         StemFlowerPlots.get("Sampled Reward").addAvgAndStdev(Reward)
         StemFlowerPlots.get("Runtime").addAvg(Runtime)
@@ -107,9 +107,9 @@ def generateStemFlowerModels(samples, trials):
 def generateStemFlowerRootsModels(samples, trials):
     
     StemFlowerRootsPlots.clear()
-    StemFlowerRootsPlots.setdefault("Tulip Type", BinaryVariablePlot("Tulip Type", samples))
+    StemFlowerRootsPlots.setdefault("Tulip Type", DiscreteVariablePlot("Tulip Type", samples))
     StemFlowerRootsPlots.setdefault("Amount of Water", ContinuousVariablePlot("Amount of Water/week (mL)", samples))
-    StemFlowerRootsPlots.setdefault("Outdoor", BinaryVariablePlot("Outdoors", samples))
+    StemFlowerRootsPlots.setdefault("Outdoor", DiscreteVariablePlot("Outdoors", samples))
     StemFlowerRootsPlots.setdefault("Pellets", DiscreteVariablePlot("Number of Fertilizer Pellets/week", samples))
     StemFlowerRootsPlots.setdefault("Objective Function Value", ContinuousVariablePlot("Objective Function Value", samples))
     StemFlowerRootsPlots.setdefault("Sampled Reward", ContinuousVariablePlot("Sampled Reward", samples))
@@ -144,9 +144,9 @@ def generateStemFlowerRootsModels(samples, trials):
             SimplexIter.append(sampleModel.getSimplexIters())
             i += 1
             
-        StemFlowerRootsPlots.get("Tulip Type").addRatio(TulipType)
+        StemFlowerRootsPlots.get("Tulip Type").addAvg(TulipType)
         StemFlowerRootsPlots.get("Amount of Water").addAvgAndStdev(Water)
-        StemFlowerRootsPlots.get("Outdoor").addRatio(Outdoor)
+        StemFlowerRootsPlots.get("Outdoor").addAvg(Outdoor)
         StemFlowerRootsPlots.get("Pellets").addAvg(Pellets)
         StemFlowerRootsPlots.get("Objective Function Value").addAvgAndStdev(Obj)
         StemFlowerRootsPlots.get("Sampled Reward").addAvgAndStdev(Reward)

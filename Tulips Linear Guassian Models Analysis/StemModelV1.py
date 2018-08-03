@@ -35,8 +35,8 @@ class StemModel:
         M = 1000
         
         # Stem average constraints 
-        self.model.addConstr(avg <= 15 + 0.0011*water + M*(1 - tulip_type))
-        self.model.addConstr(avg >= 15 + 0.0011*water - M*(1 - tulip_type))
+        self.model.addConstr(avg <= 15 + 0.0012*water + M*(1 - tulip_type))
+        self.model.addConstr(avg >= 15 + 0.0012*water - M*(1 - tulip_type))
         self.model.addConstr(avg <= 15 + 0.001*water + M*tulip_type)
         self.model.addConstr(avg >= 15 + 0.001*water - M*tulip_type)
 

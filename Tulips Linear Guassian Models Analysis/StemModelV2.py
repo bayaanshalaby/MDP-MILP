@@ -8,7 +8,7 @@ class StemModel:
         self.n = int(n)
         self.model = Model(self.name)
         self.redParams = {"Stem Base Avg" : 15, 
-                          "Stem Water Ratio Avg" : 0.0011, 
+                          "Stem Water Ratio Avg" : 0.0012, 
                           "Stem Base Stdev" : 5,
                           "Stem Water Ratio Stdev" : - 0.001}
         self.purpleParams = {"Stem Base Avg" : 15, 
